@@ -67,6 +67,7 @@
 		79262F8B13C69B1600A4B1EA /* git2.h in Headers */ = {isa = PBXBuildFile; fileRef = 79262F8A13C69B1600A4B1EA /* git2.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8803DA871313145700E6E818 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 8803DA861313145700E6E818 /* libz.dylib */; };
 		88383CFA1468982B009012D5 /* libgit2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 88383CF91468982B009012D5 /* libgit2.a */; };
+		883014EE14AC3E6E0040153F /* dct_weak.h in Headers */ = {isa = PBXBuildFile; fileRef = 883014ED14AC3E6E0040153F /* dct_weak.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8849C6A214AD81FF003890AF /* GTRepository+Private.h in Headers */ = {isa = PBXBuildFile; fileRef = 8849C6A114AD81FF003890AF /* GTRepository+Private.h */; };
 		8871709A1579145A009B41D5 /* ObjectiveGit.m in Sources */ = {isa = PBXBuildFile; fileRef = 887170971579145A009B41D5 /* ObjectiveGit.m */; };
 		8871709B1579145A009B41D5 /* ObjectiveGit.m in Sources */ = {isa = PBXBuildFile; fileRef = 887170971579145A009B41D5 /* ObjectiveGit.m */; };
@@ -1120,6 +1121,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
 			};
 			name = Debug;
 		};
@@ -1135,6 +1137,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
 			};
 			name = Release;
 		};

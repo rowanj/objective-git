@@ -30,6 +30,7 @@
 #import "GTCommit.h"
 #import "NSError+Git.h"
 
+#include "git2/branch.h"
 
 @interface GTBranch ()
 @property (nonatomic, strong) GTReference *reference;
@@ -249,7 +250,8 @@
 	}
 
 	git_reference *trackingRef = NULL;
-	int gitError = git_branch_tracking(&trackingRef, self.reference.git_reference);
+
+	int gitError = git_branch_upstream(&trackingRef, self.reference.git_reference);
 
 	// GIT_ENOTFOUND means no tracking branch found.
 	if (gitError == GIT_ENOTFOUND) {

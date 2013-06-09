@@ -35,6 +35,7 @@
 
 @interface GTEnumerator ()
 
+@property (nonatomic, assign) dispatch_queue_t walkQueue;
 @property (nonatomic, assign, readonly) git_revwalk *walk;
 @property (nonatomic, assign, readwrite) GTEnumeratorOptions options;
 
@@ -53,7 +54,11 @@
 	_repository = repo;
 	_options = GTEnumeratorOptionsNone;
 
-	int gitError = git_revwalk_new(&_walk, self.repository.git_repository);
+	self.walkQueue = dispatch_queue_create("revwalk", 0);
+	__block int gitError = GIT_OK;
+	dispatch_sync(self.walkQueue, ^{
+		gitError = git_revwalk_new(&_walk, self.repository.git_repository);
+	});
 	if (gitError != GIT_OK) {
 		if (error != NULL) *error = [NSError git_errorFor:gitError withAdditionalDescription:@"Failed to initialize rev walker."];
 		return nil;
@@ -64,7 +69,9 @@
 
 - (void)dealloc {
 	if (_walk != NULL) {
-		git_revwalk_free(_walk);
+		dispatch_sync(self.walkQueue, ^{
+			git_revwalk_free(_walk);
+		});
 		_walk = NULL;
 	}
 }
@@ -78,7 +85,10 @@
 	BOOL success = [sha git_getOid:&oid error:error];
 	if (!success) return NO;
 	
-	int gitError = git_revwalk_push(self.walk, &oid);
+	__block int gitError = GIT_OK;
+	dispatch_sync(self.walkQueue, ^{
+		gitError = git_revwalk_push(self.walk, &oid);
+	});
 	if (gitError != GIT_OK) {
 		if (error != NULL) *error = [NSError git_errorFor:gitError withAdditionalDescription:@"Failed to push SHA onto rev walker."];
 		return NO;
@@ -90,7 +100,10 @@
 - (BOOL)pushGlob:(NSString *)refGlob error:(NSError **)error {
 	NSParameterAssert(refGlob != nil);
 
-	int gitError = git_revwalk_push_glob(self.walk, refGlob.UTF8String);
+	__block int gitError = GIT_OK;
+	dispatch_sync(self.walkQueue, ^{
+		gitError = git_revwalk_push_glob(self.walk, refGlob.UTF8String);
+	});
 	if (gitError != GIT_OK) {
 		if (error != NULL) *error = [NSError git_errorFor:gitError withAdditionalDescription:@"Failed to push glob onto rev walker."];
 		return NO;
@@ -106,7 +119,10 @@
 	BOOL success = [sha git_getOid:&oid error:error];
 	if (!success) return NO;
 	
-	int gitError = git_revwalk_hide(self.walk, &oid);
+	__block int gitError = GIT_OK;
+	dispatch_sync(self.walkQueue, ^{
+		gitError = git_revwalk_hide(self.walk, &oid);
+	});
 	if (gitError != GIT_OK) {
 		if (error != NULL) *error = [NSError git_errorFor:gitError withAdditionalDescription:@"Failed to hide SHA on rev walker."];
 		return NO;
@@ -118,7 +134,10 @@
 - (BOOL)hideGlob:(NSString *)refGlob error:(NSError **)error {
 	NSParameterAssert(refGlob != nil);
 
-	int gitError = git_revwalk_hide_glob(self.walk, refGlob.UTF8String);
+	__block int gitError = GIT_OK;
+	dispatch_sync(self.walkQueue, ^{
+		gitError = git_revwalk_hide_glob(self.walk, refGlob.UTF8String);
+	});
 	if (gitError != GIT_OK) {
 		if (error != NULL) *error = [NSError git_errorFor:gitError withAdditionalDescription:@"Failed to push glob onto rev walker."];
 		return NO;
@@ -133,14 +152,19 @@
 	self.options = options;
 
 	// This will also reset the walker.
-	git_revwalk_sorting(self.walk, self.options);
+	dispatch_sync(self.walkQueue, ^{
+		git_revwalk_sorting(self.walk, self.options);
+	});
 }
 
 #pragma mark Enumerating
 
 - (GTCommit *)nextObjectWithSuccess:(BOOL *)success error:(NSError **)error {
-	git_oid oid;
-	int gitError = git_revwalk_next(&oid, self.walk);
+	__block git_oid oid;
+	__block int gitError = GIT_OK;
+	dispatch_sync(self.walkQueue, ^{
+		gitError = git_revwalk_next(&oid, self.walk);
+	});
 	if (gitError == GIT_ITEROVER) {
 		if (success != NULL) *success = YES;
 		return nil;
@@ -170,14 +194,15 @@
 }
 
 - (NSUInteger)countRemainingObjects:(NSError **)error {
-	git_oid oid;
+	__block git_oid oid;
 
-	int gitError;
-	NSUInteger count = 0;
-
-	while ((gitError = git_revwalk_next(&oid, self.walk)) == GIT_OK) {
-		count++;
-	}
+	__block NSUInteger count = 0;
+	__block int gitError = GIT_OK;
+	dispatch_sync(self.walkQueue, ^{
+		while ((gitError = git_revwalk_next(&oid, self.walk)) == GIT_OK) {
+			count++;
+		}
+	});
 
 	if (gitError == GIT_ITEROVER) {
 		return count;
